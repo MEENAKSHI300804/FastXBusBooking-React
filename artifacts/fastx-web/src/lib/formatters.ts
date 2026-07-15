@@ -1,3 +1,5 @@
+const IST = 'Asia/Kolkata';
+
 export const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -8,7 +10,8 @@ export const formatCurrency = (amount: number) => {
 
 export const formatDateTime = (dateString: string) => {
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: IST,
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -19,7 +22,8 @@ export const formatDateTime = (dateString: string) => {
 
 export const formatDate = (dateString: string) => {
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: IST,
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -29,7 +33,8 @@ export const formatDate = (dateString: string) => {
 
 export const formatTime = (dateString: string) => {
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: IST,
     hour: 'numeric',
     minute: '2-digit',
     hour12: true
@@ -39,19 +44,13 @@ export const formatTime = (dateString: string) => {
 export const calculateDuration = (departure: string, arrival: string) => {
   const d = new Date(departure);
   const a = new Date(arrival);
-  let diffMs = a.getTime() - d.getTime();
-  
-  if (diffMs < 0) {
-    // assume arrival is next day
-    diffMs += 24 * 60 * 60 * 1000;
-  }
-  
-  const hours = Math.floor(diffMs / (1000 * 60 * 60));
-  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-  
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
+  const diffMs = a.getTime() - d.getTime();
+  const totalMinutes = Math.round(Math.abs(diffMs) / (1000 * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h`;
   return `${minutes}m`;
 };
 

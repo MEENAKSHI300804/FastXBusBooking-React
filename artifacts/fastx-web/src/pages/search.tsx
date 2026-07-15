@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useSearchRoutes, getSearchRoutesQueryKey, RouteDetail } from "@workspace/api-client-react";
-import { MapPin, Search, Calendar, Clock, Filter, Bus, CheckCircle2, Link } from "lucide-react";
+import { MapPin, Search, Calendar, Clock, Filter, Bus, CheckCircle2 } from "lucide-react";
 import { formatCurrency, formatTime, calculateDuration, getBusTypeDisplay } from "@/lib/formatters";
 import { useTitle } from "@/hooks/use-title";
 
