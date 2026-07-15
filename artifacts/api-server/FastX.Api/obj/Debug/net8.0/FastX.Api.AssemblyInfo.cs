@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FastX.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8e0fa4bcf5fd4978a92556ef6829bab5ec2aa2c0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2ca42a537d158839cfeda508ee5ce573ef2a196b")]
 [assembly: System.Reflection.AssemblyProductAttribute("FastX.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FastX.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

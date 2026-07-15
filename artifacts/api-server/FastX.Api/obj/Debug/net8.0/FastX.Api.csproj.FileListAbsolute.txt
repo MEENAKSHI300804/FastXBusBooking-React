@@ -117,3 +117,4 @@
 /home/runner/workspace/artifacts/api-server/FastX.Api/obj/Debug/net8.0/FastX.Api.pdb
 /home/runner/workspace/artifacts/api-server/FastX.Api/obj/Debug/net8.0/FastX.Api.genruntimeconfig.cache
 /home/runner/workspace/artifacts/api-server/FastX.Api/obj/Debug/net8.0/ref/FastX.Api.dll
+/home/runner/workspace/artifacts/api-server/FastX.Api/obj/Debug/net8.0/FastX.Api.sourcelink.json
