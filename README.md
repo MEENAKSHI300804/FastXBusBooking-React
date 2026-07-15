@@ -1,6 +1,6 @@
 # 🚌 FastX — Bus Ticket Booking System
 
-A full-stack bus ticket booking web application built with **React (Vite)** on the frontend and **ASP.NET Core 8 (C#)** on the backend, backed by **PostgreSQL**.
+A full-stack bus ticket booking web application built with **React + Vite (TypeScript)** on the frontend and **ASP.NET Core 8 (C#)** on the backend, backed by **PostgreSQL**.
 
 ---
 
@@ -34,29 +34,73 @@ A full-stack bus ticket booking web application built with **React (Vite)** on t
 ```
 FastXBusBooking-React/
 │
-├── artifacts/
-│   ├── fastx-web/               # ⚛️  React + Vite Frontend
-│   │   └── src/
-│   │       ├── pages/           # Home, Search, Seat Selection, Bookings, Profile
-│   │       │                    # Operator (Dashboard, Buses, Routes, Bookings)
-│   │       │                    # Admin (Dashboard, Users, Operators, Bookings)
-│   │       ├── components/      # Reusable UI components (shadcn/ui)
-│   │       ├── context/         # Auth context (JWT stored in localStorage)
-│   │       ├── lib/             # Formatters, utilities
-│   │       └── hooks/           # Custom React hooks
-│   │
-│   └── api-server/              # ⚙️  ASP.NET Core 8 C# Backend
-│       └── FastX.Api/
-│           ├── Controllers/     # Auth, Users, Buses, Routes, Bookings, Admin, Operator
-│           ├── Models/          # User, Bus, BusRoute, Seat, Booking, BookingSeat
-│           ├── DTOs/            # Request/Response data transfer objects
-│           ├── Services/        # Auth, Bus, Route, Booking, Dashboard services
-│           ├── Data/            # EF Core DbContext + PostgreSQL
-│           └── Program.cs       # App startup, JWT config, CORS, seed data
+├── src/                         # ⚛️  React Frontend Source
+│   ├── components/
+│   │   ├── layout/              # PassengerLayout, OperatorLayout, AdminLayout
+│   │   └── ui/                  # shadcn/ui components (Button, Card, Input...)
+│   ├── context/
+│   │   └── auth-context.tsx     # JWT auth context (login, logout, user state)
+│   ├── hooks/                   # Custom React hooks
+│   ├── lib/
+│   │   └── formatters.ts        # Currency, date/time (IST), duration helpers
+│   ├── pages/
+│   │   ├── home.tsx             # Landing page with search
+│   │   ├── search.tsx           # Route search results + filters
+│   │   ├── seat-selection.tsx   # Interactive seat map + booking
+│   │   ├── bookings.tsx         # Passenger booking history
+│   │   ├── booking-detail.tsx   # Single booking detail + cancel
+│   │   ├── profile.tsx          # User profile management
+│   │   ├── login.tsx            # Passenger / Operator login
+│   │   ├── register.tsx         # Passenger registration
+│   │   ├── operator-register.tsx
+│   │   ├── operator-dashboard.tsx
+│   │   ├── operator-buses.tsx
+│   │   ├── operator-routes.tsx
+│   │   ├── operator-bookings.tsx
+│   │   ├── admin-dashboard.tsx
+│   │   ├── admin-users.tsx
+│   │   ├── admin-operators.tsx
+│   │   └── admin-bookings.tsx
+│   ├── App.tsx                  # Routes (wouter)
+│   ├── main.tsx                 # Entry point
+│   └── index.css                # Tailwind CSS global styles
 │
-└── lib/
-    ├── api-client-react/        # Auto-generated React Query hooks (Orval)
-    └── api-zod/                 # Auto-generated Zod validation schemas
+├── public/                      # Static assets
+│
+├── backend/                     # ⚙️  ASP.NET Core 8 C# Backend
+│   ├── Controllers/
+│   │   ├── AuthController.cs    # Register, Login (Passenger & Operator)
+│   │   ├── UsersController.cs   # GET/PUT /api/users/me
+│   │   ├── BusesController.cs   # CRUD /api/buses
+│   │   ├── RoutesController.cs  # CRUD + search + seats /api/routes
+│   │   ├── BookingsController.cs# Passenger bookings /api/bookings
+│   │   ├── OperatorController.cs# Operator bookings + refunds
+│   │   ├── AdminController.cs   # Admin: users, operators, bookings
+│   │   └── DashboardController.cs
+│   ├── Models/
+│   │   ├── User.cs
+│   │   ├── Bus.cs
+│   │   ├── BusRoute.cs
+│   │   ├── Seat.cs
+│   │   ├── Booking.cs
+│   │   └── BookingSeat.cs
+│   ├── DTOs/                    # Request/Response data contracts
+│   ├── Services/                # AuthService, BusService, RouteService, BookingService
+│   ├── Data/
+│   │   └── FastXDbContext.cs    # EF Core DbContext + PostgreSQL
+│   ├── Program.cs               # Startup: JWT, CORS, EF Core, Swagger, seed data
+│   ├── appsettings.json
+│   ├── appsettings.Development.json
+│   └── FastX.Api.csproj
+│
+├── screenshots/                 # App workflow screenshots
+├── index.html                   # Vite HTML entry
+├── vite.config.ts
+├── tsconfig.json
+├── package.json
+├── .prettierrc
+├── .editorconfig
+└── README.md
 ```
 
 ---
@@ -66,42 +110,43 @@ FastXBusBooking-React/
 | Layer | Technology |
 |---|---|
 | Frontend | React 18, Vite, TypeScript |
-| UI Library | shadcn/ui, Tailwind CSS |
-| State / Data | TanStack React Query |
-| Routing | Wouter |
+| UI Components | shadcn/ui, Tailwind CSS v4 |
+| State / Data Fetching | TanStack React Query v5 |
+| Client-side Routing | Wouter |
+| Forms & Validation | React Hook Form + Zod |
 | Backend | ASP.NET Core 8, C# |
 | ORM | Entity Framework Core 8 |
 | Database | PostgreSQL (Npgsql) |
-| Auth | JWT Bearer Tokens + BCrypt |
-| API Docs | Swagger / OpenAPI |
+| Authentication | JWT Bearer Tokens + BCrypt |
+| API Documentation | Swagger / OpenAPI |
 
 ---
 
 ## 🚀 Features
 
 ### 👤 Passenger
-- Register & Login
+- Register & login
 - Search buses by origin, destination & date
-- Filter by bus type (A/C Seater / Sleeper, Non A/C Seater / Sleeper)
-- Interactive seat selection
-- Book tickets & view booking history
-- Cancel bookings
+- Filter results by bus type (A/C Seater / A/C Sleeper / Non A/C Seater / Non A/C Sleeper)
+- Interactive seat map — select/deselect seats visually
+- Book tickets and view booking history
+- Cancel bookings with automatic refund
 
 ### 🚌 Bus Operator
 - Operator registration & login
 - Manage buses (add, edit, delete)
 - Manage routes & schedules
-- View all bookings on their routes
+- View all passenger bookings on their routes
 - Issue refunds
 
 ### 🛡️ Admin
-- View all users & operators
-- Manage all bookings
-- Platform-wide dashboard with stats
+- View & manage all users and operators
+- Monitor all bookings across the platform
+- Platform-wide dashboard with statistics
 
 ---
 
-## 🔑 Demo Accounts
+## 🔑 Demo Credentials
 
 | Role | Email | Password |
 |---|---|---|
@@ -111,9 +156,9 @@ FastXBusBooking-React/
 
 ---
 
-## 🛣️ API Endpoints
+## 🛣️ REST API Endpoints
 
-### Auth
+### Authentication
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/api/auth/register` | Passenger registration |
@@ -124,70 +169,99 @@ FastXBusBooking-React/
 ### Routes & Buses
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/api/routes/search` | Search routes by origin, destination, date |
+| GET | `/api/routes/search?origin=&destination=&date=` | Search routes |
 | GET | `/api/routes/{id}/seats` | Get seats for a route |
-| GET | `/api/buses` | List buses (operator) |
-| POST | `/api/buses` | Create bus |
+| GET | `/api/buses` | List operator's buses |
+| POST | `/api/buses` | Create a new bus |
+| PUT | `/api/buses/{id}` | Update bus |
+| DELETE | `/api/buses/{id}` | Delete bus |
 
 ### Bookings
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/api/bookings` | Create booking |
-| GET | `/api/bookings` | Get user bookings |
-| DELETE | `/api/bookings/{id}` | Cancel booking |
+| POST | `/api/bookings` | Create a booking |
+| GET | `/api/bookings` | Get current user's bookings |
+| GET | `/api/bookings/{id}` | Get booking detail |
+| DELETE | `/api/bookings/{id}` | Cancel a booking |
+
+### Operator
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/operator/bookings` | All bookings on operator routes |
+| POST | `/api/operator/bookings/{id}/refund` | Issue a refund |
+| GET | `/api/operator/dashboard` | Operator stats |
 
 ### Admin
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/api/admin/users` | All users |
+| GET | `/api/admin/users` | All passengers |
 | GET | `/api/admin/operators` | All operators |
 | GET | `/api/admin/bookings` | All bookings |
-| GET | `/api/admin/dashboard` | Platform stats |
+| GET | `/api/admin/dashboard` | Platform statistics |
 
 ---
 
 ## 🏃 Running Locally
 
+### Prerequisites
+- Node.js 18+ and npm
+- .NET 8 SDK
+- PostgreSQL
+
 ### Backend (C#)
+
 ```bash
-cd artifacts/api-server/FastX.Api
-# Set your PostgreSQL connection string in environment
-export DATABASE_URL="postgresql://user:password@localhost:5432/fastx"
+cd backend
+
+# Set your database connection string
+export DATABASE_URL="postgresql://username:password@localhost:5432/fastxdb"
+
+dotnet restore
 dotnet run
-# API runs on http://localhost:8080
-# Swagger UI: http://localhost:8080/swagger
+# API runs at http://localhost:8080
+# Swagger UI at http://localhost:8080/swagger
 ```
 
 ### Frontend (React)
+
 ```bash
-cd artifacts/fastx-web
-pnpm install
-pnpm dev
-# App runs on http://localhost:5173
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+# App runs at http://localhost:5173
 ```
+
+> **Note:** On first run the backend auto-creates the database schema and seeds demo data (users, buses, routes).
 
 ---
 
 ## 🔐 Environment Variables
 
-| Variable | Description |
-|---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_SECRET` | Secret key for JWT signing (production) |
+| Variable | Where | Description |
+|---|---|---|
+| `DATABASE_URL` | Backend | PostgreSQL connection string |
+| `JWT_SECRET` | Backend | Secret key for JWT signing (production) |
 
 ---
 
-## 📦 Available Cities / Routes
+## 🗺️ Available Routes (Seeded)
 
-Mumbai, Pune, Goa, Nashik, Delhi, Agra, Jaipur, Lucknow, Chandigarh, Chennai, Bangalore, Hyderabad, Mysore, Kolkata, Bhubaneswar
+Mumbai ↔ Pune, Mumbai ↔ Goa, Mumbai ↔ Nashik, Mumbai ↔ Hyderabad, Mumbai ↔ Chennai,  
+Delhi ↔ Agra, Delhi ↔ Jaipur, Delhi ↔ Lucknow, Delhi ↔ Chandigarh,  
+Chennai ↔ Bangalore, Chennai ↔ Hyderabad, Bangalore ↔ Hyderabad, Bangalore ↔ Mysore,  
+Kolkata → Bhubaneswar
 
 ---
 
 ## 👩‍💻 Built With
 
-- [React](https://react.dev/)
-- [ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/)
-- [Entity Framework Core](https://learn.microsoft.com/en-us/ef/core/)
-- [shadcn/ui](https://ui.shadcn.com/)
-- [TanStack Query](https://tanstack.com/query)
-- [Tailwind CSS](https://tailwindcss.com/)
+- [React](https://react.dev/) — Frontend UI library
+- [Vite](https://vitejs.dev/) — Frontend build tool
+- [ASP.NET Core 8](https://learn.microsoft.com/en-us/aspnet/core/) — Backend framework
+- [Entity Framework Core](https://learn.microsoft.com/en-us/ef/core/) — ORM for PostgreSQL
+- [shadcn/ui](https://ui.shadcn.com/) — Accessible UI components
+- [TanStack Query](https://tanstack.com/query) — Server state management
+- [Tailwind CSS](https://tailwindcss.com/) — Utility-first CSS
+- [Wouter](https://github.com/molefrog/wouter) — Lightweight React router
