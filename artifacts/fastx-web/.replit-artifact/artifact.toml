@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "FastX - Bus Ticket Booking"
+version = "1.0.0"
+id = "artifacts/fastx-web"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20447
+
+[services.development]
+run = "pnpm --filter @workspace/fastx-web run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/fastx-web", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/fastx-web/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20447"
+BASE_PATH = "/"

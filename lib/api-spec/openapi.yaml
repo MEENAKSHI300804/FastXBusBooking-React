@@ -2,21 +2,37 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: API specification
+  version: 1.0.0
+  description: FastX Bus Ticket Booking API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication and registration
+  - name: users
+    description: User profile management
+  - name: buses
+    description: Bus management (operators/admin)
+  - name: routes
+    description: Bus route management and search
+  - name: seats
+    description: Seat availability
+  - name: bookings
+    description: Ticket booking management
+  - name: admin
+    description: Admin operations
+  - name: dashboard
+    description: Dashboard summary data
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,7 +40,727 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── AUTH ──────────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      operationId: registerUser
+      tags: [auth]
+      summary: Register a new passenger
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegistration"
+      responses:
+        "201":
+          description: Registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: loginUser
+      tags: [auth]
+      summary: Login as passenger or admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/operator/register:
+    post:
+      operationId: registerOperator
+      tags: [auth]
+      summary: Register a new bus operator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OperatorRegistration"
+      responses:
+        "201":
+          description: Operator registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/operator/login:
+    post:
+      operationId: loginOperator
+      tags: [auth]
+      summary: Login as bus operator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── USERS ─────────────────────────────────────────────────────────────────
+  /users/me:
+    get:
+      operationId: getCurrentUser
+      tags: [users]
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+    put:
+      operationId: updateCurrentUser
+      tags: [users]
+      summary: Update current user profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+
+  # ── BUSES ─────────────────────────────────────────────────────────────────
+  /buses:
+    get:
+      operationId: listBuses
+      tags: [buses]
+      summary: List all buses (operator/admin)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of buses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bus"
+    post:
+      operationId: createBus
+      tags: [buses]
+      summary: Create a new bus (operator)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BusInput"
+      responses:
+        "201":
+          description: Bus created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bus"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /buses/{id}:
+    get:
+      operationId: getBus
+      tags: [buses]
+      summary: Get bus details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bus details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bus"
+        "404":
+          description: Not found
+    put:
+      operationId: updateBus
+      tags: [buses]
+      summary: Update bus details (operator/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BusInput"
+      responses:
+        "200":
+          description: Bus updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bus"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteBus
+      tags: [buses]
+      summary: Delete bus (operator/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ── ROUTES ────────────────────────────────────────────────────────────────
+  /routes/search:
+    get:
+      operationId: searchRoutes
+      tags: [routes]
+      summary: Search bus routes by origin, destination, and date
+      parameters:
+        - name: origin
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: destination
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Matching routes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RouteDetail"
+
+  /routes/cities:
+    get:
+      operationId: listCities
+      tags: [routes]
+      summary: List all available cities for autocomplete
+      responses:
+        "200":
+          description: List of cities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /routes:
+    get:
+      operationId: listRoutes
+      tags: [routes]
+      summary: List all routes (operator/admin)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of routes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RouteDetail"
+    post:
+      operationId: createRoute
+      tags: [routes]
+      summary: Create a new bus route (operator)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RouteInput"
+      responses:
+        "201":
+          description: Route created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteDetail"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /routes/{id}:
+    get:
+      operationId: getRoute
+      tags: [routes]
+      summary: Get route details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Route details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteDetail"
+        "404":
+          description: Not found
+    put:
+      operationId: updateRoute
+      tags: [routes]
+      summary: Update route (operator/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RouteInput"
+      responses:
+        "200":
+          description: Route updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteDetail"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteRoute
+      tags: [routes]
+      summary: Delete route (operator/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ── SEATS ─────────────────────────────────────────────────────────────────
+  /routes/{routeId}/seats:
+    get:
+      operationId: getRouteSeats
+      tags: [seats]
+      summary: Get seat availability for a route
+      parameters:
+        - name: routeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Seat map with availability
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Seat"
+        "404":
+          description: Route not found
+
+  # ── BOOKINGS ──────────────────────────────────────────────────────────────
+  /bookings:
+    get:
+      operationId: listBookings
+      tags: [bookings]
+      summary: List bookings for current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Booking history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+    post:
+      operationId: createBooking
+      tags: [bookings]
+      summary: Book seats on a route
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+      responses:
+        "201":
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: Seats unavailable or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /bookings/{id}:
+    get:
+      operationId: getBooking
+      tags: [bookings]
+      summary: Get booking details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Not found
+
+  /bookings/{id}/cancel:
+    patch:
+      operationId: cancelBooking
+      tags: [bookings]
+      summary: Cancel a booking and request refund
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: Cannot cancel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+
+  # ── OPERATOR ──────────────────────────────────────────────────────────────
+  /operator/bookings:
+    get:
+      operationId: listOperatorBookings
+      tags: [bookings]
+      summary: List all bookings for operator's routes
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All bookings for operator routes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /operator/bookings/{id}/refund:
+    patch:
+      operationId: processRefund
+      tags: [bookings]
+      summary: Process refund for a cancelled booking (operator)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Refund processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Not found
+
+  /operator/dashboard:
+    get:
+      operationId: getOperatorDashboard
+      tags: [dashboard]
+      summary: Operator dashboard summary
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Operator dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperatorDashboard"
+
+  # ── ADMIN ─────────────────────────────────────────────────────────────────
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List all passengers (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserProfile"
+
+  /admin/users/{id}:
+    delete:
+      operationId: adminDeleteUser
+      tags: [admin]
+      summary: Delete a user account (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /admin/operators:
+    get:
+      operationId: adminListOperators
+      tags: [admin]
+      summary: List all bus operators (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All operators
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserProfile"
+
+  /admin/operators/{id}:
+    delete:
+      operationId: adminDeleteOperator
+      tags: [admin]
+      summary: Delete an operator account (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /admin/bookings:
+    get:
+      operationId: adminListBookings
+      tags: [admin]
+      summary: List all bookings (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /admin/dashboard:
+    get:
+      operationId: getAdminDashboard
+      tags: [dashboard]
+      summary: Admin dashboard summary
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Admin dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Summary stats for the current user (role-aware)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+# ── COMPONENTS ────────────────────────────────────────────────────────────────
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +770,363 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+
+    # ── Auth ──────────────────────────────────────────────────────────────
+    UserRegistration:
+      type: object
+      required: [email, password, name, gender, phone]
+      properties:
+        email:
+          type: string
+
+        password:
+          type: string
+          minLength: 6
+        name:
+          type: string
+        gender:
+          type: string
+          enum: [male, female, other]
+        phone:
+          type: string
+        address:
+          type: ["string", "null"]
+
+    OperatorRegistration:
+      type: object
+      required: [email, password, name, phone, companyName]
+      properties:
+        email:
+          type: string
+
+        password:
+          type: string
+          minLength: 6
+        name:
+          type: string
+        phone:
+          type: string
+        companyName:
+          type: string
+        address:
+          type: ["string", "null"]
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserProfile"
+
+    # ── User ──────────────────────────────────────────────────────────────
+    UserProfile:
+      type: object
+      required: [id, email, name, role]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        gender:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [passenger, operator, admin]
+        companyName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        gender:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        companyName:
+          type: ["string", "null"]
+
+    # ── Bus ───────────────────────────────────────────────────────────────
+    Bus:
+      type: object
+      required: [id, name, busNumber, busType, totalSeats, operatorId]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        busNumber:
+          type: string
+        busType:
+          type: string
+          enum: [seater_ac, seater_non_ac, sleeper_ac, sleeper_non_ac]
+        totalSeats:
+          type: integer
+        operatorId:
+          type: integer
+        operatorName:
+          type: ["string", "null"]
+        amenities:
+          $ref: "#/components/schemas/Amenities"
+
+    BusInput:
+      type: object
+      required: [name, busNumber, busType, totalSeats]
+      properties:
+        name:
+          type: string
+        busNumber:
+          type: string
+        busType:
+          type: string
+          enum: [seater_ac, seater_non_ac, sleeper_ac, sleeper_non_ac]
+        totalSeats:
+          type: integer
+          minimum: 10
+          maximum: 60
+        amenities:
+          $ref: "#/components/schemas/Amenities"
+
+    Amenities:
+      type: object
+      properties:
+        waterBottle:
+          type: boolean
+        chargingPoint:
+          type: boolean
+        tv:
+          type: boolean
+        blanket:
+          type: boolean
+
+    # ── Route ─────────────────────────────────────────────────────────────
+    RouteDetail:
+      type: object
+      required: [id, origin, destination, departureTime, arrivalTime, fare, availableSeats, totalSeats, status]
+      properties:
+        id:
+          type: integer
+        busId:
+          type: integer
+        busName:
+          type: ["string", "null"]
+        busNumber:
+          type: ["string", "null"]
+        busType:
+          type: ["string", "null"]
+        origin:
+          type: string
+        destination:
+          type: string
+        departureTime:
+          type: string
+          format: date-time
+        arrivalTime:
+          type: string
+          format: date-time
+        fare:
+          type: number
+        availableSeats:
+          type: integer
+        totalSeats:
+          type: integer
+        status:
+          type: string
+          enum: [active, cancelled, completed]
+        amenities:
+          $ref: "#/components/schemas/Amenities"
+        operatorName:
+          type: ["string", "null"]
+
+    RouteInput:
+      type: object
+      required: [busId, origin, destination, departureTime, arrivalTime, fare]
+      properties:
+        busId:
+          type: integer
+        origin:
+          type: string
+        destination:
+          type: string
+        departureTime:
+          type: string
+          format: date-time
+        arrivalTime:
+          type: string
+          format: date-time
+        fare:
+          type: number
+          minimum: 0
+
+    # ── Seat ──────────────────────────────────────────────────────────────
+    Seat:
+      type: object
+      required: [id, seatNumber, isBooked]
+      properties:
+        id:
+          type: integer
+        seatNumber:
+          type: string
+        isBooked:
+          type: boolean
+        seatRow:
+          type: ["integer", "null"]
+        seatCol:
+          type: ["string", "null"]
+
+    # ── Booking ───────────────────────────────────────────────────────────
+    Booking:
+      type: object
+      required: [id, userId, routeId, seatNumbers, totalAmount, status, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: ["string", "null"]
+        routeId:
+          type: integer
+        origin:
+          type: ["string", "null"]
+        destination:
+          type: ["string", "null"]
+        departureTime:
+          type: ["string", "null"]
+          format: date-time
+        seatNumbers:
+          type: array
+          items:
+            type: string
+        totalAmount:
+          type: number
+        status:
+          type: string
+          enum: [confirmed, cancelled, refunded]
+        createdAt:
+          type: string
+          format: date-time
+        busName:
+          type: ["string", "null"]
+        busNumber:
+          type: ["string", "null"]
+
+    BookingInput:
+      type: object
+      required: [routeId, seatIds]
+      properties:
+        routeId:
+          type: integer
+        seatIds:
+          type: array
+          items:
+            type: integer
+          minItems: 1
+
+    # ── Dashboard ─────────────────────────────────────────────────────────
+    DashboardSummary:
+      type: object
+      required: [totalBookings, upcomingJourneys, cancelledBookings, totalSpent]
+      properties:
+        totalBookings:
+          type: integer
+        upcomingJourneys:
+          type: integer
+        cancelledBookings:
+          type: integer
+        totalSpent:
+          type: number
+        recentBookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Booking"
+
+    OperatorDashboard:
+      type: object
+      required: [totalBuses, totalRoutes, totalBookings, totalRevenue]
+      properties:
+        totalBuses:
+          type: integer
+        totalRoutes:
+          type: integer
+        totalBookings:
+          type: integer
+        totalRevenue:
+          type: number
+        pendingRefunds:
+          type: integer
+        recentBookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Booking"
+        popularRoutes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RouteStats"
+
+    AdminDashboard:
+      type: object
+      required: [totalUsers, totalOperators, totalRoutes, totalBookings, totalRevenue]
+      properties:
+        totalUsers:
+          type: integer
+        totalOperators:
+          type: integer
+        totalRoutes:
+          type: integer
+        totalBookings:
+          type: integer
+        totalRevenue:
+          type: number
+        recentBookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Booking"
+
+    RouteStats:
+      type: object
+      required: [routeId, origin, destination, bookingCount]
+      properties:
+        routeId:
+          type: integer
+        origin:
+          type: string
+        destination:
+          type: string
+        bookingCount:
+          type: integer
+        revenue:
+          type: number

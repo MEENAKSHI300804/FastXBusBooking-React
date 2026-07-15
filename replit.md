@@ -1,36 +1,58 @@
-# [Project name]
+# FastX - Bus Ticket Booking
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A full-stack bus ticket booking platform with a C# ASP.NET Core 8 backend and React + Vite frontend.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- **Frontend:** `pnpm --filter @workspace/fastx-web run dev` (served via `artifacts/fastx-web: web` workflow)
+- **Backend:** `dotnet watch run --project FastX.Api/FastX.Api.csproj` (served via `artifacts/api-server: API Server` workflow)
+- **Codegen:** `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from `lib/api-spec/openapi.yaml`
+- Required env: `DATABASE_URL` — Postgres connection string (auto-provisioned by Replit)
+
+## Test Accounts (seeded on first run)
+
+| Role      | Email                          | Password      |
+|-----------|-------------------------------|---------------|
+| Admin     | admin@fastx.com               | Admin@123     |
+| Operator  | operator@speedlines.com       | Operator@123  |
+| Operator  | operator@nationalbus.com      | Operator@123  |
+| Passenger | alice@example.com             | Alice@123     |
+| Passenger | bob@example.com               | Bob@123       |
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- **Frontend:** React 19, Vite, TanStack Query, Wouter, Tailwind CSS, shadcn/ui
+- **Backend:** ASP.NET Core 8 Web API (C#), Entity Framework Core 8, Npgsql (PostgreSQL)
+- **Auth:** JWT (HS256), BCrypt password hashing
+- **DB:** PostgreSQL + EF Core (auto-migrated via `EnsureCreated` on startup)
+- **API Codegen:** Orval (OpenAPI → React Query hooks + Zod schemas)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — single source of truth for all API contracts
+- `lib/api-client-react/src/generated/` — generated React Query hooks (don't edit)
+- `artifacts/api-server/FastX.Api/` — C# ASP.NET Core project
+  - `Models/` — EF Core entity models (User, Bus, BusRoute, Seat, Booking)
+  - `Controllers/` — API controllers (Auth, Users, Buses, Routes, Bookings, Operator, Admin, Dashboard)
+  - `Services/` — Business logic (AuthService, BusService, RouteService, BookingService, DashboardService)
+  - `Data/FastXDbContext.cs` — EF Core DbContext
+  - `Program.cs` — App startup, DI, JWT, CORS, seeding
+- `artifacts/fastx-web/src/` — React frontend
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- **JWT stored in localStorage** under key `fastx_token`; attached to all API calls via custom-fetch mutator
+- **Role-based routing**: passenger → home/bookings, operator → /operator/*, admin → /admin/*
+- **EF Core `EnsureCreated`** used for schema creation (no migrations); safe for dev + first run
+- **Seats auto-generated** when a route is created (4 columns A/B/C/D × N rows)
+- **OpenAPI-first**: spec gates codegen which gates the React hooks; never hand-write types
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Three-role booking platform:
+- **Passengers** search routes, select seats interactively, book tickets, view history, cancel bookings
+- **Operators** manage buses, create/edit routes, view bookings, process refunds
+- **Admins** manage users, operators, and view all system bookings/stats
 
 ## User preferences
 
@@ -38,8 +60,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- After any OpenAPI spec change, run codegen before touching frontend code
+- `dotnet watch` runs from `artifacts/api-server/` directory (not workspace root) — paths in artifact.toml are relative to that dir
+- DB is seeded only on first run (`if (await db.Users.AnyAsync()) return;`) — reset by clearing tables or dropping the DB
+- JWT key comes from `appsettings.Development.json` in dev; set `JWT_SECRET` env var in production
